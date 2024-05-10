@@ -1,5 +1,4 @@
-﻿using StoryBackend.Abstract;
-using StoryBackend.Commands;
+﻿using StoryBackend.Commands;
 
 namespace StoryBackend.Endpoints
 {
