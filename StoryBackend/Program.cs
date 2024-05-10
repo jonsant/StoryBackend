@@ -1,3 +1,4 @@
+using StoryBackend.Database;
 using StoryBackend.Endpoints;
 using StoryBackend.Services;
 
@@ -15,6 +16,7 @@ builder.Services.ConfigureSwaggerGen(setup =>
         Version = "v1"
     });
 });
+builder.Services.AddStoryDb(builder);
 builder.Services.AddStoryServices();
 
 var app = builder.Build();

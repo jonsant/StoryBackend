@@ -6,7 +6,8 @@ namespace StoryBackend.Endpoints
     {
         public static WebApplication? UseStoryEndpoints(this WebApplication app)
         {
-            app.MapGet("/getstorybackendtest", StoryCommands.HandleGetStoryBackendTest).WithName("GetStoryBackendTest").WithOpenApi();
+            app.MapGet("/GetForecastBackendTest", StoryCommands.HandleGetForecastBackendTest).WithName("GetForecastBackendTest").WithOpenApi();
+            app.MapPost("/CreateForecastBackendTest", StoryCommands.HandleCreateForecastBackendTest).WithName("CreateForecastBackendTest").WithOpenApi();
 
             return app;
         }

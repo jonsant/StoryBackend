@@ -1,24 +1,26 @@
-﻿using StoryBackend.Abstract;
+﻿using Mapster;
+using Microsoft.EntityFrameworkCore;
+using StoryBackend.Abstract;
+using StoryBackend.Database;
+using StoryBackend.Models.DTOs;
 
 namespace StoryBackend.Services
 {
-    public class StoryService : IStoryService
+    public class StoryService(StoryDbContext storyDbContext) : IStoryService
     {
-        public IEnumerable<WeatherForecast> GetStoryBackendTest()
+        public async Task<GetWeatherForecastDto> CreateForecastTest(CreateWeatherForecast createWeatherForecastDto)
         {
-            var summaries = new[]
-{
-                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-            };
+            WeatherForecast forecast = createWeatherForecastDto.Adapt<WeatherForecast>();
 
-            IEnumerable<WeatherForecast> forecast = Enumerable.Range(1, 5).Select(index =>
-                    new WeatherForecast
-                    (
-                        DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                        Random.Shared.Next(-20, 55),
-                        summaries[Random.Shared.Next(summaries.Length)]
-                    )).ToList();
-            return forecast;
+            storyDbContext.WeatherForecasts.Add(forecast);
+            await storyDbContext.SaveChangesAsync();
+            return await Task.FromResult(forecast.Adapt<GetWeatherForecastDto>());
+        }
+
+        public async Task<IEnumerable<GetWeatherForecastDto>> GetForecastBackendTest()
+        {
+            IEnumerable<GetWeatherForecastDto> forecasts = await storyDbContext.WeatherForecasts.Select(f => f.Adapt<GetWeatherForecastDto>()).ToListAsync();
+            return await Task.FromResult(forecasts);
         }
     }
 }

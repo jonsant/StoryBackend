@@ -1,7 +1,10 @@
-﻿namespace StoryBackend.Abstract
+﻿using StoryBackend.Models.DTOs;
+
+namespace StoryBackend.Abstract
 {
     public interface IStoryService
     {
-        public IEnumerable<WeatherForecast> GetStoryBackendTest();
+        public Task<IEnumerable<GetWeatherForecastDto>> GetForecastBackendTest();
+        public Task<GetWeatherForecastDto> CreateForecastTest(CreateWeatherForecast createWeatherForecastDto);
     }
 }
