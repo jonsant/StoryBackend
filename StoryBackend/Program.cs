@@ -2,7 +2,20 @@ using StoryBackend.Database;
 using StoryBackend.Endpoints;
 using StoryBackend.Services;
 
+var MyAllowOrigins = "_myAllowOrigins";
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowOrigins,
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200", "https://jonsant.github.io");
+            policy.WithHeaders("*");
+            policy.WithMethods("*");
+        });
+});
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -30,6 +43,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(MyAllowOrigins);
 app.UseStoryEndpoints();
 
 app.Run();
