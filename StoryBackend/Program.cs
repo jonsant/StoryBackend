@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 using StoryBackend.Database;
 using StoryBackend.Endpoints;
 using StoryBackend.Services;
@@ -5,6 +7,13 @@ using StoryBackend.Services;
 var MyAllowOrigins = "_myAllowOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+builder.Services.AddAuthorizationBuilder().AddPolicy("play_story", policy =>
+{
+    //policy.RequireClaim("scope");
+    policy.RequireScope("Story.Play");
+});
 
 builder.Services.AddCors(options =>
 {
@@ -43,7 +52,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseCors(MyAllowOrigins);
 app.UseStoryEndpoints();
+app.UseUserEndpoints();
 
 app.Run();

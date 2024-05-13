@@ -7,6 +7,7 @@ namespace StoryBackend.Services
         public static IServiceCollection AddStoryServices(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddTransient<IStoryService, StoryService>();
+            serviceCollection.AddTransient<IUserService, UserService>();
 
             return serviceCollection;
         }
