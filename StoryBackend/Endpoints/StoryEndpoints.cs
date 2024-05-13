@@ -1,4 +1,4 @@
-﻿using StoryBackend.Commands;
+﻿using StoryBackend.CommandsAndQueries;
 
 namespace StoryBackend.Endpoints;
 

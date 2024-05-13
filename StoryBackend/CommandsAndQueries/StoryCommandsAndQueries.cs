@@ -1,7 +1,7 @@
 ﻿using StoryBackend.Abstract;
 using StoryBackend.Models.DTOs;
 
-namespace StoryBackend.Commands
+namespace StoryBackend.CommandsAndQueries
 {
     public class StoryCommandsAndQueries
     {
