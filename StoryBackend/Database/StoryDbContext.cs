@@ -7,6 +7,11 @@ namespace StoryBackend.Database
     {
         public DbSet<WeatherForecast> WeatherForecasts { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Story> Stories { get; set; }
+        public DbSet<Invitee> Invitees { get; set; }
+        public DbSet<LobbyMessage> LobbyMessages { get; set; }
+        public DbSet<Participant> Participants { get; set; }
+        public DbSet<StoryEntry> StoryEntries { get; set; }
 
         public StoryDbContext(DbContextOptions<StoryDbContext> dbContextOptions) : base(dbContextOptions) {}
     }

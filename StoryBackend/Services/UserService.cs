@@ -12,7 +12,7 @@ public class UserService(StoryDbContext storyDbContext) : IUserService
     public async Task<GetUserDto> CreateUser(CreateUserDto createUserDto)
     {
         IEnumerable<User> allUsers = await storyDbContext.Users.ToListAsync();
-        User? userExists = allUsers.FirstOrDefault(u => u.GlobalUserId.Equals(createUserDto.GlobalUserId));
+        User? userExists = allUsers.FirstOrDefault(u => u.UserId.Equals(createUserDto.UserId));
         if (userExists is not null) return userExists.Adapt<GetUserDto>();
 
         User user = createUserDto.Adapt<User>();
@@ -20,10 +20,10 @@ public class UserService(StoryDbContext storyDbContext) : IUserService
 
         while (!unique)
         {
-            user.UserName = "story-user-" + Guid.NewGuid().ToString().Split('-')[0];
-            unique = allUsers.FirstOrDefault(u => u.UserName.Equals(user.UserName)) is null;
+            user.Username = "story-user-" + Guid.NewGuid().ToString().Split('-')[0];
+            unique = allUsers.FirstOrDefault(u => u.Username.Equals(user.Username)) is null;
         }
-
+        user.Created = DateTimeOffset.Now;
         storyDbContext.Users.Add(user);
         await storyDbContext.SaveChangesAsync();
         return user.Adapt<GetUserDto>();
@@ -35,9 +35,9 @@ public class UserService(StoryDbContext storyDbContext) : IUserService
         return users;
     }
 
-    public async Task<GetUserDto?> GetUserById(Guid globalUserId)
+    public async Task<GetUserDto?> GetUserById(Guid userId)
     {
-        User? user = await storyDbContext.Users.FirstOrDefaultAsync(u => u.GlobalUserId == globalUserId);
+        User? user = await storyDbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         if (user is null) return null;
 
         return user.Adapt<GetUserDto>();
