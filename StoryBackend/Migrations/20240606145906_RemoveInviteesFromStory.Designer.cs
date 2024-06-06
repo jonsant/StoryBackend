@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StoryBackend.Database;
 
@@ -10,9 +11,11 @@ using StoryBackend.Database;
 namespace StoryBackend.Migrations
 {
     [DbContext(typeof(StoryDbContext))]
-    partial class StoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240606145906_RemoveInviteesFromStory")]
+    partial class RemoveInviteesFromStory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.4");
@@ -33,6 +36,8 @@ namespace StoryBackend.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("InviteeId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Invitees");
                 });
@@ -58,6 +63,10 @@ namespace StoryBackend.Migrations
 
                     b.HasKey("LobbyMessageId");
 
+                    b.HasIndex("StoryId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("LobbyMessages");
                 });
 
@@ -80,6 +89,10 @@ namespace StoryBackend.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("ParticipantId");
+
+                    b.HasIndex("StoryId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Participants");
                 });
@@ -109,10 +122,12 @@ namespace StoryBackend.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("StoryName")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("StoryId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Stories");
                 });
@@ -137,6 +152,8 @@ namespace StoryBackend.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("StoryEntryId");
+
+                    b.HasIndex("StoryId");
 
                     b.ToTable("StoryEntries");
                 });
@@ -176,6 +193,87 @@ namespace StoryBackend.Migrations
                     b.HasKey("WeatherForecastId");
 
                     b.ToTable("WeatherForecasts");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.Invitee", b =>
+                {
+                    b.HasOne("StoryBackend.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.LobbyMessage", b =>
+                {
+                    b.HasOne("StoryBackend.Models.Story", "Story")
+                        .WithMany("LobbyMessages")
+                        .HasForeignKey("StoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StoryBackend.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Story");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.Participant", b =>
+                {
+                    b.HasOne("StoryBackend.Models.Story", "Story")
+                        .WithMany("Participants")
+                        .HasForeignKey("StoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StoryBackend.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Story");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.Story", b =>
+                {
+                    b.HasOne("StoryBackend.Models.User", null)
+                        .WithMany("Stories")
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.StoryEntry", b =>
+                {
+                    b.HasOne("StoryBackend.Models.Story", "Story")
+                        .WithMany("StoryEntries")
+                        .HasForeignKey("StoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Story");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.Story", b =>
+                {
+                    b.Navigation("LobbyMessages");
+
+                    b.Navigation("Participants");
+
+                    b.Navigation("StoryEntries");
+                });
+
+            modelBuilder.Entity("StoryBackend.Models.User", b =>
+                {
+                    b.Navigation("Stories");
                 });
 #pragma warning restore 612, 618
         }

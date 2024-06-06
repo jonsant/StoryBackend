@@ -9,7 +9,7 @@ namespace StoryBackend.Database
             serviceCollection.AddDbContext<StoryDbContext>(options =>
             {
                 options.UseSqlite(builder.Configuration.GetConnectionString("StoryDb"));
-            });
+            }, ServiceLifetime.Transient);
             return serviceCollection;
         }
     }

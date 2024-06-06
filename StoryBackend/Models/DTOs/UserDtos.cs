@@ -6,4 +6,7 @@ public class GetUserDto
     public string Username { get; set; } = string.Empty;
 }
 
-public record CreateUserDto(Guid UserId);
+public record CreateUserDto(Guid UserId)
+{
+    public static CreateUserDto Instance(Guid UserId) => new(UserId);
+}
