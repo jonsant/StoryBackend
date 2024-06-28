@@ -18,5 +18,7 @@
                 Created = DateTimeOffset.Now
             };
         }
+
+        public Invitee Clone() => (Invitee) this.MemberwiseClone();
     }
 }

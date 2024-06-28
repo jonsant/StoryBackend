@@ -8,6 +8,9 @@ namespace StoryBackend.Services
         {
             serviceCollection.AddTransient<IStoryService, StoryService>();
             serviceCollection.AddTransient<IUserService, UserService>();
+            serviceCollection.AddTransient<IInviteeService, InviteeService>();
+            serviceCollection.AddTransient<IParticipantService, ParticipantService>();
+            serviceCollection.AddTransient<ILobbyMessageService, LobbyMessageService>();
 
             return serviceCollection;
         }

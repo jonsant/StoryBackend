@@ -4,12 +4,13 @@ using StoryBackend.Abstract;
 using StoryBackend.Database;
 using StoryBackend.Models;
 using StoryBackend.Models.DTOs;
+using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class StoryService(StoryDbContext storyDbContext) : IStoryService
+public class StoryService(StoryDbContext storyDbContext, IParticipantService participantService) : IStoryService
 {
     public async Task<GetWeatherForecastDto> CreateForecastTest(CreateWeatherForecast createWeatherForecastDto)
     {
@@ -72,6 +73,9 @@ public class StoryService(StoryDbContext storyDbContext) : IStoryService
         Story newStory = Story.Instance(createStoryDto.StoryName, Guid.Parse(id), "Created");
         await storyDbContext.Stories.AddAsync(newStory);
         await storyDbContext.SaveChangesAsync();
+
+        CreateParticipantDto? createParticipant = CreateParticipantDto.Instance(newStory.StoryId, Guid.Parse(id), DateTimeOffset.Now);
+        GetParticipantDto? createdParticipant = await participantService.CreateParticipant(createParticipant);
 
         foreach (string invitee in createStoryDto.Invitees)
         {

@@ -57,5 +57,7 @@ app.UseAuthorization();
 app.UseCors(MyAllowOrigins);
 app.UseStoryEndpoints();
 app.UseUserEndpoints();
+app.UseInviteeEndpoints();
+app.UseLobbyMessageEndpoints();
 
 app.Run();
