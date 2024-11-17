@@ -4,28 +4,27 @@ using StoryBackend.Abstract;
 using StoryBackend.Database;
 using StoryBackend.Models;
 using StoryBackend.Models.DTOs;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class LobbyMessageService(StoryDbContext storyDbContext) : ILobbyMessageService
+public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementService authManagementService) : ILobbyMessageService
 {
     public async Task<GetLobbyMessageDto> CreateLobbyMessage(CreateLobbyMessageDto createLobbyMessageDto, ClaimsPrincipal user)
     {
-        var id = user.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier");
+        Guid? id = await authManagementService.GetUserId(user);
         if (id is null) return null;
 
         Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(createLobbyMessageDto.StoryId));
         if (story is null) return null;
 
         Participant? participant = await storyDbContext.Participants.FirstOrDefaultAsync(p => p.StoryId.Equals(createLobbyMessageDto.StoryId)
-         && p.UserId.Equals(Guid.Parse(id)));
+         && p.UserId.Equals(id));
         if (participant is null) return null;
 
         LobbyMessage lobbyMessage = createLobbyMessageDto.Adapt<LobbyMessage>();
         lobbyMessage.Created = DateTimeOffset.Now;
-        lobbyMessage.UserId = Guid.Parse(id);
+        lobbyMessage.UserId = id.Value;
         await storyDbContext.LobbyMessages.AddAsync(lobbyMessage);
         await storyDbContext.SaveChangesAsync();
         return lobbyMessage.Adapt<GetLobbyMessageDto>();
@@ -34,13 +33,13 @@ public class LobbyMessageService(StoryDbContext storyDbContext) : ILobbyMessageS
     public async Task<IEnumerable<GetLobbyMessageDto>> GetLobbyMessagesByStoryId(string storyId, ClaimsPrincipal user)
     {
         Guid storyIdGuid = Guid.Parse(storyId);
-        var id = user.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier");
+        Guid? id = await authManagementService.GetUserId(user);
         if (id is null) return null;
 
         Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(storyIdGuid));
         if (story is null) return null;
 
-        Participant? participant = await storyDbContext.Participants.FirstOrDefaultAsync(p => p.UserId.Equals(Guid.Parse(id)) && p.StoryId.Equals(Guid.Parse(storyId)));
+        Participant? participant = await storyDbContext.Participants.FirstOrDefaultAsync(p => p.UserId.Equals(id) && p.StoryId.Equals(Guid.Parse(storyId)));
         if (participant is null) return null;
 
         //IEnumerable<Participant> storyParticipants = await storyDbContext.Participants.Where(p => p.StoryId.Equals(storyIdGuid)).ToListAsync();

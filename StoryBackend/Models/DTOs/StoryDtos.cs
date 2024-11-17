@@ -10,6 +10,7 @@
         public Guid StoryId { get; set; }
         public string? StoryName { get; set; }
         public Guid CreatorUserId { get; set; }
+        public string CreatorUsername { get; set; }
         public DateTimeOffset Created { get; set; }
         public DateTimeOffset? Finished { get; set; }
         public string? Status { get; set; } // Created, Active, Finished

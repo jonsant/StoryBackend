@@ -11,6 +11,8 @@ namespace StoryBackend.Services
             serviceCollection.AddTransient<IInviteeService, InviteeService>();
             serviceCollection.AddTransient<IParticipantService, ParticipantService>();
             serviceCollection.AddTransient<ILobbyMessageService, LobbyMessageService>();
+            serviceCollection.AddTransient<IAuthManagementService, AuthManagementService>();
+            serviceCollection.AddTransient<IEmailWhitelistService, EmailWhitelistService>();
 
             return serviceCollection;
         }

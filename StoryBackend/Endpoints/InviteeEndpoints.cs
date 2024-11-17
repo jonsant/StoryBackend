@@ -6,8 +6,8 @@ public static class InviteeEndpoints
 {
     public static WebApplication? UseInviteeEndpoints(this WebApplication app)
     {
-        app.MapGet("/GetStoryInvites", InviteeCommandsAndQueries.HandleGetStoryInvites).WithName("GetStoryInvites").WithOpenApi().RequireAuthorization("play_story");
-        app.MapPost("/AcceptInvite", InviteeCommandsAndQueries.HandleAcceptInvite).WithName("AcceptInvite").WithOpenApi();//.RequireAuthorization("play_story");
+        app.MapGet("/GetStoryInvites", InviteeCommandsAndQueries.HandleGetStoryInvites).WithName("GetStoryInvites").WithOpenApi().RequireAuthorization();
+        app.MapPost("/AcceptInvite", InviteeCommandsAndQueries.HandleAcceptInvite).WithName("AcceptInvite").WithOpenApi().RequireAuthorization();
 
 
         return app;

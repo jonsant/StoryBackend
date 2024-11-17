@@ -10,6 +10,10 @@ namespace StoryBackend.Database
             {
                 options.UseSqlite(builder.Configuration.GetConnectionString("StoryDb"));
             }, ServiceLifetime.Transient);
+            serviceCollection.AddDbContext<IdStoryDbContext>(options =>
+            {
+                options.UseSqlite(builder.Configuration.GetConnectionString("IdStoryDb"));
+            }, ServiceLifetime.Transient);
             return serviceCollection;
         }
     }

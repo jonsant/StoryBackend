@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class UserService(StoryDbContext storyDbContext) : IUserService
+public class UserService(StoryDbContext storyDbContext, IAuthManagementService authManagementService) : IUserService
 {
     public async Task<GetUserDto> CreateUser(CreateUserDto createUserDto)
     {
@@ -21,7 +21,7 @@ public class UserService(StoryDbContext storyDbContext) : IUserService
 
         while (!unique)
         {
-            user.Username = "story-user-" + Guid.NewGuid().ToString().Split('-')[0];
+            user.Username = "user-" + Guid.NewGuid().ToString().Split('-')[0];
             unique = allUsers.FirstOrDefault(u => u.Username.Equals(user.Username)) is null;
         }
         user.Created = DateTimeOffset.Now;
@@ -50,11 +50,11 @@ public class UserService(StoryDbContext storyDbContext) : IUserService
 
     public async Task<IEnumerable<GetUserDto>> GetUserByName(string username, ClaimsPrincipal user)
     {
-        var id = user.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier");
+        Guid? id = await authManagementService.GetUserId(user);
         if (id is null) return Enumerable.Empty<GetUserDto>();
 
         List<User> users = await storyDbContext.Users.Where(u => u.Username.ToLower().Contains(username.ToLower())).ToListAsync();
-        users = users.Where(u => !u.UserId.ToString().Equals(id)).ToList();
+        users = users.Where(u => !u.UserId.ToString().Equals(id.ToString())).ToList();
         return users.Select(u => u.Adapt<GetUserDto>());
     }
 }

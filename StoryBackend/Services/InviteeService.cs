@@ -9,7 +9,8 @@ using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class InviteeService(StoryDbContext storyDbContext, IParticipantService participantService) : IInviteeService
+public class InviteeService(StoryDbContext storyDbContext, IParticipantService participantService,
+    IAuthManagementService authManagementService) : IInviteeService
 {
     public async Task<GetInviteeDto> CreateInvitee(CreateInviteeDto createInviteeDto, ClaimsPrincipal user)
     {
@@ -23,11 +24,11 @@ public class InviteeService(StoryDbContext storyDbContext, IParticipantService p
 
     public async Task<GetParticipantDto?> AcceptInvite(AcceptInviteDto acceptInviteDto, ClaimsPrincipal user)
     {
-        //var id = user.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier");
-        if (acceptInviteDto.InviteeId is null) return null;
-
-        Guid? id = Guid.Parse("EECB35DB-AD6E-4101-8369-55DB6F7555CE");
+        Guid? id = await authManagementService.GetUserId(user);
         if (id is null) return null;
+
+        if (acceptInviteDto.InviteeId is null) return null;
+        //Guid? id = Guid.Parse("EECB35DB-AD6E-4101-8369-55DB6F7555CE");
 
         Invitee? invite = await storyDbContext.Invitees.FirstOrDefaultAsync(i => i.InviteeId.Equals(acceptInviteDto.InviteeId));
         if (invite is null) return null;
@@ -46,9 +47,9 @@ public class InviteeService(StoryDbContext storyDbContext, IParticipantService p
 
     public async Task<IEnumerable<GetInviteeDto>> GetStoryInvites(ClaimsPrincipal user)
     {
-        //var id = user.FindFirstValue("http://schemas.microsoft.com/identity/claims/objectidentifier");
-        Guid? id = Guid.Parse("EECB35DB-AD6E-4101-8369-55DB6F7555CE");
+        Guid? id = await authManagementService.GetUserId(user);
         if (id is null) return null;
+        //Guid? id = Guid.Parse("EECB35DB-AD6E-4101-8369-55DB6F7555CE");
 
         List<Invitee> invites = await storyDbContext.Invitees.Where(i => i.UserId.Equals(id)).ToListAsync();
         List<GetInviteeDto> inviteeDtos = new List<GetInviteeDto>();
