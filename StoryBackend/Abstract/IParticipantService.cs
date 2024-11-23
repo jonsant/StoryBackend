@@ -7,4 +7,5 @@ public interface IParticipantService
 {
     public Task<GetParticipantDto> CreateParticipant(CreateParticipantDto createParticipantDto);
     public Task<IEnumerable<GetParticipantDto>> GetParticipants(Guid storyId, ClaimsPrincipal user);
+    public Task<bool> UserIsStoryParticipant(Guid userId, Guid storyId);
 }

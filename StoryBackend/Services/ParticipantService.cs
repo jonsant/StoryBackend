@@ -37,4 +37,10 @@ public class ParticipantService(StoryDbContext storyDbContext) : IParticipantSer
         }
         return usernames;
     }
+
+    public async Task<bool> UserIsStoryParticipant(Guid userId, Guid storyId)
+    {
+        Participant? participant = await storyDbContext.Participants.FirstOrDefaultAsync(p => p.StoryId.Equals(storyId) && p.UserId.Equals(userId));
+        return participant is not null;
+    }
 }

@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using StoryBackend.Configurations;
 using StoryBackend.Database;
 using StoryBackend.Endpoints;
 using StoryBackend.Services;
+using StoryBackend.SignalR;
 using System.Text;
 
 var MyAllowOrigins = "_myAllowOrigins";
@@ -30,6 +32,7 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("http://localhost:4200", "https://jonsant.github.io", "https://localhost:4200");
             policy.WithHeaders("*");
             policy.WithMethods("*");
+            policy.AllowCredentials();
         });
 });
 
@@ -45,6 +48,8 @@ builder.Services.ConfigureSwaggerGen(setup =>
         Version = "v1"
     });
 });
+
+builder.Services.AddSignalR();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
@@ -68,6 +73,30 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false,
         RequireExpirationTime = false,
         ValidateLifetime = false
+    };
+
+    // Sending the access token in the query string is required when using WebSockets or ServerSentEvents
+    // due to a limitation in Browser APIs. We restrict it to only calls to the
+    // SignalR hub in this code.
+    // See https://docs.microsoft.com/aspnet/core/signalr/security#access-token-logging
+    // for more information about security considerations when using
+    // the query string to transmit the access token.
+    jwt.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/lobbyhub")))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -99,5 +128,6 @@ app.UseInviteeEndpoints();
 app.UseLobbyMessageEndpoints();
 app.UseAuthManagementEndpoints();
 app.UseEmailWhitelistEndpoints();
+app.MapHub<LobbyHub>("/lobbyhub/{storyid}");
 
 app.Run();

@@ -1,19 +1,24 @@
 ﻿using Mapster;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using StoryBackend.Abstract;
 using StoryBackend.Database;
 using StoryBackend.Models;
 using StoryBackend.Models.DTOs;
+using StoryBackend.SignalR;
 using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementService authManagementService) : ILobbyMessageService
+public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementService authManagementService, IHubContext<LobbyHub> lobbyHubContext) : ILobbyMessageService
 {
     public async Task<GetLobbyMessageDto> CreateLobbyMessage(CreateLobbyMessageDto createLobbyMessageDto, ClaimsPrincipal user)
     {
         Guid? id = await authManagementService.GetUserId(user);
         if (id is null) return null;
+
+        User? messageUser = await storyDbContext.Users.FirstOrDefaultAsync(u => u.UserId.Equals(id));
+        if (messageUser is null) return null;
 
         Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(createLobbyMessageDto.StoryId));
         if (story is null) return null;
@@ -27,7 +32,12 @@ public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementS
         lobbyMessage.UserId = id.Value;
         await storyDbContext.LobbyMessages.AddAsync(lobbyMessage);
         await storyDbContext.SaveChangesAsync();
-        return lobbyMessage.Adapt<GetLobbyMessageDto>();
+
+        GetLobbyMessageDto lbm = lobbyMessage.Adapt<GetLobbyMessageDto>();
+        lbm.Username = messageUser.Username;
+
+        await lobbyHubContext.Clients.Group(story.StoryId.ToString()!).SendAsync("NewLobbyMessage", lbm);
+        return lbm;
     }
 
     public async Task<IEnumerable<GetLobbyMessageDto>> GetLobbyMessagesByStoryId(string storyId, ClaimsPrincipal user)
