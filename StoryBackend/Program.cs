@@ -90,7 +90,7 @@ builder.Services.AddAuthentication(options =>
             // If the request is for our hub...
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/lobbyhub")))
+                (path.StartsWithSegments("/storyhub")))
             {
                 // Read the token out of the query string
                 context.Token = accessToken;
@@ -128,6 +128,6 @@ app.UseInviteeEndpoints();
 app.UseLobbyMessageEndpoints();
 app.UseAuthManagementEndpoints();
 app.UseEmailWhitelistEndpoints();
-app.MapHub<LobbyHub>("/lobbyhub/{storyid}");
+app.MapHub<StoryHub>("/storyhub/{storyid}");
 
 app.Run();

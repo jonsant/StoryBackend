@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementService authManagementService, IHubContext<LobbyHub> lobbyHubContext) : ILobbyMessageService
+public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementService authManagementService, IHubContext<StoryHub> lobbyHubContext) : ILobbyMessageService
 {
     public async Task<GetLobbyMessageDto> CreateLobbyMessage(CreateLobbyMessageDto createLobbyMessageDto, ClaimsPrincipal user)
     {

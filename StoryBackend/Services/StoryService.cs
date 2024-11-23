@@ -74,6 +74,7 @@ public class StoryService(StoryDbContext storyDbContext,
         if (userId is null) return null;
 
         List<GetStoryDto> stories = await storyDbContext.Stories.Where(s => s.CreatorUserId.Equals(userId)).Select(s => s.Adapt<GetStoryDto>()).ToListAsync();
+        stories = stories.OrderByDescending(s => s.Created).ToList();
         return stories;
     }
 

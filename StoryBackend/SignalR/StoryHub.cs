@@ -5,7 +5,7 @@ using StoryBackend.Abstract;
 namespace StoryBackend.SignalR
 {
     [Authorize]
-    public class LobbyHub(IAuthManagementService authManagementService,
+    public class StoryHub(IAuthManagementService authManagementService,
         IUserService userService,
         IParticipantService participantService
     ) : Hub
