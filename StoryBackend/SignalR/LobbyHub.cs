@@ -33,7 +33,7 @@ namespace StoryBackend.SignalR
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-
+            var a = Context.User;
             //return base.OnDisconnectedAsync(exception);
         }
     }

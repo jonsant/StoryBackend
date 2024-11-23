@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using StoryBackend.Abstract;
 using StoryBackend.Database;
+//using StoryBackend.Migrations;
 using StoryBackend.Models;
 using StoryBackend.Models.DTOs;
 using System.Security.Claims;
@@ -56,5 +57,27 @@ public class UserService(StoryDbContext storyDbContext, IAuthManagementService a
         List<User> users = await storyDbContext.Users.Where(u => u.Username.ToLower().Contains(username.ToLower())).ToListAsync();
         users = users.Where(u => !u.UserId.ToString().Equals(id.ToString())).ToList();
         return users.Select(u => u.Adapt<GetUserDto>());
+    }
+
+    public async Task<bool> UsernameAvailable(string username, ClaimsPrincipal claimsPrincipal)
+    {
+        string? usernameExists = await storyDbContext.Users.Select(u => u.Username).FirstOrDefaultAsync(name => name.ToLower().Equals(username.ToLower()));
+        return usernameExists is null;
+    }
+
+    public async Task<GetUserDto?> ChangeUsername(NewUsernameDto newUsernameDto, ClaimsPrincipal claimsPrincipal)
+    {
+        Guid? id = await authManagementService.GetUserId(claimsPrincipal);
+        if (id is null) return null;
+
+        string? usernameTaken = await storyDbContext.Users.Select(u => u.Username).FirstOrDefaultAsync(name => name.ToLower().Equals(newUsernameDto.NewUsername.ToLower()));
+        if (usernameTaken is not null) return null;
+
+        User? user = await storyDbContext.Users.FirstOrDefaultAsync(u => u.UserId.Equals(id));
+        if (user is null) return null;
+
+        user.Username = newUsernameDto.NewUsername;
+        await storyDbContext.SaveChangesAsync();
+        return user.Adapt<GetUserDto>();
     }
 }

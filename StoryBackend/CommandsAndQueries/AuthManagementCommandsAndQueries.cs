@@ -11,4 +11,5 @@ public class AuthManagementCommandsAndQueries
     public static async Task<UserLoginResponseDto> HandleLogin(IAuthManagementService authManagementService, UserLoginRequestDto userLoginRequestDto) => await authManagementService.Login(userLoginRequestDto);
     public static async Task<CreateRoleResponseDto> HandleCreateRole(IAuthManagementService authManagementService, CreateRoleRequestDto createRoleRequestDto) => await authManagementService.CreateRole(createRoleRequestDto);
     public static async Task<IEnumerable<string>> HandleGetRoles(IAuthManagementService authManagementService) => await authManagementService.GetRoles();
+    public static async Task<UserLoginResponseDto> HandleGetCurrentUser(IAuthManagementService authManagementService, ClaimsPrincipal claimsPrincipal) => await authManagementService.GetCurrentUser(claimsPrincipal);
 }

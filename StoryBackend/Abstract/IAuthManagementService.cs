@@ -12,6 +12,7 @@ public interface IAuthManagementService
     public Task<Guid?> GetUserId(ClaimsPrincipal claimsPrincipal);
     public Task<CreateRoleResponseDto> CreateRole(CreateRoleRequestDto request);
     public Task<IEnumerable<string>> GetRoles();
+    public Task<UserLoginResponseDto> GetCurrentUser(ClaimsPrincipal claimsPrincipal);
 
 
 }

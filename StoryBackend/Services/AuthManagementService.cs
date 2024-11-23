@@ -118,6 +118,33 @@ public class AuthManagementService: IAuthManagementService
         
     }
 
+    public async Task<UserLoginResponseDto?> GetCurrentUser(ClaimsPrincipal claimsPrincipal)
+    {
+        IdentityUser? identityUser = await GetUser(claimsPrincipal);
+        if (identityUser is null) return null;
+
+        // Get roles
+        List<string> currentRoles = (await CheckRoles(identityUser)).ToList();
+
+        // Get User
+        IUserService? userService = _serviceProvider.GetRequiredService<IUserService>();
+        GetUserDto? loggedInUser = await userService.GetUserById(Guid.Parse(identityUser.Id));
+
+        if (loggedInUser is null) return null;
+
+        var token = await GenerateJwtToken(identityUser);
+        return new UserLoginResponseDto()
+        {
+            Result = true,
+            Token = token,
+            Username = loggedInUser.Username,
+            Email = identityUser.Email,
+            UserId = loggedInUser.UserId,
+            Roles = currentRoles
+        };
+
+    }
+
     private async Task<string> GenerateJwtToken(IdentityUser user)
     {
         var jwtTokenHandler = new JwtSecurityTokenHandler();

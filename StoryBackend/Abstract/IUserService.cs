@@ -9,4 +9,6 @@ public interface IUserService
     public Task<GetUserDto?> GetUserById(Guid globalUserId);
     public Task<IEnumerable<GetUserDto>> GetUserByName(string username, ClaimsPrincipal user);
     public Task<GetUserDto> CreateUser(CreateUserDto createUserDto);
+    public Task<GetUserDto?> ChangeUsername(NewUsernameDto newUsername, ClaimsPrincipal claimsPrincipal);
+    public Task<bool> UsernameAvailable(string username, ClaimsPrincipal user);
 }
