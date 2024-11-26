@@ -15,11 +15,16 @@ public class EmailWhitelistService(StoryDbContext storyDbContext, IAuthManagemen
         return await storyDbContext.EmailWhitelist.AnyAsync(e => e.Email.ToLower().Equals(email.ToLower()));
     }
 
-    public async Task<string?> AddEmail(AddEmailDto emailDto)
+    public async Task<AddEmailDto> AddEmail(AddEmailDto emailDto)
     {
         EmailWhitelist emailToAdd = EmailWhitelist.Instance(emailDto.Email);
         await storyDbContext.EmailWhitelist.AddAsync(emailToAdd);
-        await storyDbContext.SaveChangesAsync();
-        return emailToAdd.Email;
+        string res = "";
+        if (await storyDbContext.SaveChangesAsync() > 0)
+        {
+            res = emailToAdd.Email;
+        }
+        emailDto.Email = res;
+        return emailDto;
     }
 }

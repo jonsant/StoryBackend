@@ -6,5 +6,5 @@ namespace StoryBackend.Abstract;
 public interface IEmailWhitelistService
 {
     public Task<bool> EmailExists(string email);
-    public Task<string?> AddEmail(AddEmailDto email);
+    public Task<AddEmailDto> AddEmail(AddEmailDto email);
 }

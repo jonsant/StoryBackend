@@ -7,5 +7,5 @@ namespace StoryBackend.CommandsAndQueries;
 
 public class EmailWhitelistCommandsAndQueries
 {
-    public static async Task<string?> HandleAddEmail(IEmailWhitelistService emailWhitelistService, AddEmailDto addEmailDto) => await emailWhitelistService.AddEmail(addEmailDto);
+    public static async Task<AddEmailDto> HandleAddEmail(IEmailWhitelistService emailWhitelistService, AddEmailDto addEmailDto) => await emailWhitelistService.AddEmail(addEmailDto);
 }
