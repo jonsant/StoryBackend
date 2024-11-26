@@ -1,7 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StoryBackend.Models;
 
+[Index(nameof(Username), IsUnique = true)]
 public class User
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]

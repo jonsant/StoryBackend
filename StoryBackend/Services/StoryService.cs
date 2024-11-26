@@ -1,10 +1,12 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using StoryBackend.Abstract;
 using StoryBackend.Database;
 using StoryBackend.Models;
 using StoryBackend.Models.DTOs;
+using StoryBackend.SignalR;
 using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
@@ -14,7 +16,10 @@ namespace StoryBackend.Services;
 public class StoryService(StoryDbContext storyDbContext,
     IParticipantService participantService,
     IAuthManagementService authManagementService,
-    UserManager<IdentityUser> userManager
+    //UserManager<IdentityUser> userManager,
+    ICommonService commonService,
+    IHubContext<StoryHub> storyHubContext,
+    IHubContext<UserHub> userHubContext
     ) : IStoryService
 {
     public async Task<GetWeatherForecastDto> CreateForecastTest(CreateWeatherForecast createWeatherForecastDto)
@@ -34,7 +39,8 @@ public class StoryService(StoryDbContext storyDbContext,
 
     public async Task<GetStoryDto> GetStoryById(string storyId, ClaimsPrincipal claimsPrincipal)
    {
-        //if ((await authManagementService.GetUserId(claimsPrincipal)) is null) return null;
+        Guid? userId = await authManagementService.GetUserId(claimsPrincipal);
+        if (userId is null) return null;
 
         Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(Guid.Parse(storyId)));
         if (story is null) return null;
@@ -43,30 +49,26 @@ public class StoryService(StoryDbContext storyDbContext,
         IEnumerable<Guid> participantUserIds = await storyDbContext.Participants.Where(p => !p.UserId.Equals(story.CreatorUserId) && p.StoryId.Equals(story.StoryId)).Select(p => p.UserId).ToListAsync();
         
         GetStoryDto storyDto = story.Adapt<GetStoryDto>();
-        storyDto.Invitees = await GetUsernamesList(inviteeUserIds);
-        storyDto.Participants = await GetUsernamesList(participantUserIds);
-        storyDto.CreatorUsername = await GetUsernameById(story.CreatorUserId) ?? "";
+        storyDto.Invitees = await commonService.GetUsernamesList(inviteeUserIds);
+        storyDto.Participants = await commonService.GetUsernamesList(participantUserIds);
+        storyDto.CreatorUsername = await commonService.GetUsernameById(story.CreatorUserId) ?? "";
+        storyDto.NumberOfEntries = await storyDbContext.StoryEntries.CountAsync(s => s.StoryId.Equals(story.StoryId));
 
-        return await Task.FromResult(storyDto);
-    }
-
-    private async Task<IEnumerable<string>> GetUsernamesList(IEnumerable<Guid> userIds)
-    {
-        List<string> usernames = new List<string>();
-        foreach (Guid id in userIds)
+        if (story.CurrentPlayerId is not null && story.CurrentPlayerId.Equals(userId))
         {
-            string? username = await GetUsernameById(id);
-            if  (username is not null) usernames.Add(username);
+            List<StoryEntry> allEntries = await storyDbContext.StoryEntries.
+                Where(e => e.StoryId.Equals(story.StoryId)).ToListAsync();
+            allEntries = allEntries.OrderByDescending(e => e.Created).ToList();
+            StoryEntry? latestEntry = allEntries.FirstOrDefault();
+            storyDto.SentenceToFinish = latestEntry is not null ? latestEntry.Second : null;
         }
-        return usernames;
-    }
 
-    private async Task<string?> GetUsernameById(Guid userId)
-    {
-        User? user = await storyDbContext.Users.FirstOrDefaultAsync(u => u.UserId.Equals(userId));
-        return user is null ? null : user.Username;
+        if (story.Finished is not null)
+        {
+            storyDto.FinalStoryEntries = await GetFinalStory(story);
+        }
+        return storyDto;
     }
-
 
     public async Task<IEnumerable<GetStoryDto>> GetStoriesByUserId(ClaimsPrincipal claimsPrincipal)
     {
@@ -86,6 +88,7 @@ public class StoryService(StoryDbContext storyDbContext,
         List<Guid> participantEntries = await storyDbContext.Participants.Where(p => p.UserId.Equals(userId)).Select(pa => pa.StoryId).ToListAsync();
 
         List<GetStoryDto> stories = await storyDbContext.Stories.Where(s => !s.CreatorUserId.Equals(userId) && participantEntries.Contains(s.StoryId)).Select(s => s.Adapt<GetStoryDto>()).ToListAsync();
+        stories = stories.OrderByDescending(s => s.Created).ToList();
         return stories;
     }
 
@@ -93,6 +96,9 @@ public class StoryService(StoryDbContext storyDbContext,
     {
         Guid? id = await authManagementService.GetUserId(claimsPrincipal);
         if (id is null) return null;
+
+        string? username = await commonService.GetUsernameById(id.Value);
+        if (username is null) return null;
 
         Story newStory = Story.Instance(createStoryDto.StoryName, id.Value, "Created");
         await storyDbContext.Stories.AddAsync(newStory);
@@ -109,9 +115,106 @@ public class StoryService(StoryDbContext storyDbContext,
             Invitee newInvitee = Invitee.Instance(userToInvite.UserId, newStory.StoryId);
             await storyDbContext.Invitees.AddAsync(newInvitee);
             await storyDbContext.SaveChangesAsync();
+            GetInviteeDto dto = GetInviteeDto.Instance(newInvitee.InviteeId, newStory.StoryName, newStory.StoryId, username, newInvitee.Created);
+            await userHubContext.Clients.User(userToInvite.UserId.ToString()).SendAsync("NewInvite", dto);
+
         }
         GetStoryDto getStoryDto = newStory.Adapt<GetStoryDto>();
         getStoryDto.Invitees = createStoryDto.Invitees;
-        return await Task.FromResult(getStoryDto);
+        return getStoryDto;
+    }
+
+    public async Task<StartStoryDto> StartStory(StartStoryDto startStoryDto, ClaimsPrincipal claimsPrincipal)
+    {
+        Guid? id = await authManagementService.GetUserId(claimsPrincipal);
+        if (id is null) return null;
+
+        Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(startStoryDto.StoryId));
+        if (story is null) return null;
+
+        if (!id.Value.Equals(story.CreatorUserId) || !story.Status.ToLower().Equals("created")) return null;
+
+        story.Status = "Active";
+        story.CurrentPlayerInOrder = 0;
+        story.CurrentPlayerId = id.Value;
+
+        if (await storyDbContext.SaveChangesAsync() > 0)
+        {
+            GetStoryDto? getStoryDto = await GetStoryById(story.StoryId.ToString(), claimsPrincipal);
+            await storyHubContext.Clients.Group(story.StoryId.ToString()).SendAsync("StoryChanged", getStoryDto);
+        }
+        return startStoryDto;
+    }
+
+    public async Task<CreateEntryDto?> CreateEntry(CreateEntryDto createEntryDto, ClaimsPrincipal claimsPrincipal)
+    {
+        Guid? id = await authManagementService.GetUserId(claimsPrincipal);
+        if (id is null) return null;
+
+        Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(createEntryDto.StoryId));
+        if (story is null) return null;
+
+        if (!story.CurrentPlayerId.Equals(id)) return null;
+
+        StoryEntry? storyEntry = StoryEntry.Instance(story.StoryId, id.Value, createEntryDto.First, createEntryDto.Second);
+        await storyDbContext.StoryEntries.AddAsync(storyEntry);
+
+        story.CurrentPlayerId = await GetNextPlayerId(story);
+        if (await storyDbContext.SaveChangesAsync() > 0)
+        {
+            //GetStoryDto? getStoryDto = await GetStoryById(story.StoryId.ToString(), claimsPrincipal);
+            await storyHubContext.Clients.Group(story.StoryId.ToString()).SendAsync("NewEntry", story.CurrentPlayerId);
+        }
+        return createEntryDto;
+    }
+
+    public async Task<CreateEntryDto?> EndStory(CreateEntryDto createEntryDto, ClaimsPrincipal claimsPrincipal)
+    {
+        Guid? id = await authManagementService.GetUserId(claimsPrincipal);
+        if (id is null) return null;
+
+        Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(createEntryDto.StoryId));
+        if (story is null) return null;
+
+        if (!story.CurrentPlayerId.Equals(id) || !story.CreatorUserId.Equals(id)) return null;
+
+        StoryEntry? storyEntry = StoryEntry.Instance(story.StoryId, id.Value, createEntryDto.First, null);
+        await storyDbContext.StoryEntries.AddAsync(storyEntry);
+
+        story.Status = "Finished";
+        story.Finished = DateTimeOffset.UtcNow;
+        story.CurrentPlayerId = null;
+
+        if (await storyDbContext.SaveChangesAsync() > 0)
+        {
+            GetStoryDto? getStoryDto = await GetStoryById(story.StoryId.ToString(), claimsPrincipal);
+            await storyHubContext.Clients.Group(story.StoryId.ToString()).SendAsync("StoryChanged", getStoryDto);
+        }
+        return createEntryDto;
+    }
+
+    private async Task<Guid> GetNextPlayerId(Story story)
+    {
+        List<Guid> allParticipants = (await participantService.GetStoryParticipantIds(story.StoryId)).ToList();
+        int currentPlayerIndex = allParticipants.IndexOf(story.CurrentPlayerId!.Value);
+        Guid nextPlayer = currentPlayerIndex == (allParticipants.Count - 1) ? 
+            allParticipants[0] : 
+            allParticipants[currentPlayerIndex + 1];
+        return nextPlayer;
+    }
+
+    private async Task<IEnumerable<FinalStoryEntryDto>> GetFinalStory(Story story)
+    {
+        List<FinalStoryEntryDto> finalStoryEntries = Enumerable.Empty<FinalStoryEntryDto>().ToList();
+        IEnumerable<StoryEntry> allEntries = await storyDbContext.StoryEntries.Where(e => e.StoryId.Equals(story.StoryId)).ToListAsync();
+        allEntries = allEntries.OrderBy(e => e.Created);
+
+        foreach (StoryEntry entry in allEntries)
+        {
+            string text = entry.First + " " + entry.Second;
+            string username = await commonService.GetUsernameById(entry.UserId) ?? "Unknown";
+            finalStoryEntries.Add(FinalStoryEntryDto.Instance(username, text));
+        }
+        return finalStoryEntries;
     }
 }

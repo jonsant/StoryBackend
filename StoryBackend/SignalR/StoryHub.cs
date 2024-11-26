@@ -12,11 +12,11 @@ namespace StoryBackend.SignalR
     {
         public override async Task OnConnectedAsync()
         {
-            if (Context.User is null) return;
+            if (Context.User is null) Context.Abort();
             Guid? storyId = Guid.Parse(Context.GetHttpContext()!.GetRouteValue("storyid")!.ToString()!);
             var userId = await authManagementService.GetUserId(Context.User);
             bool isParticipant = await participantService.UserIsStoryParticipant(userId.Value, storyId.Value);
-            if (!isParticipant) return;
+            if (!isParticipant) Context.Abort();
             var user = await userService.GetUserById(userId.Value);
 
             await Groups.AddToGroupAsync(Context.ConnectionId, storyId.ToString()!);

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
@@ -90,7 +91,7 @@ builder.Services.AddAuthentication(options =>
             // If the request is for our hub...
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/storyhub")))
+                (path.StartsWithSegments("/storyhub") || path.StartsWithSegments("/userhub")))
             {
                 // Read the token out of the query string
                 context.Token = accessToken;
@@ -104,6 +105,9 @@ builder.Services.AddAuthorization(o =>
     o.AddPolicy("AdminsOnly", b =>
     b.RequireRole("Admin")
 ));
+
+// signalR custom userId provider
+builder.Services.AddSingleton<IUserIdProvider, UserIdBasedUserIdProvider>();
 
 builder.Services.AddStoryDb(builder);
 builder.Services.AddStoryServices();
@@ -129,5 +133,6 @@ app.UseLobbyMessageEndpoints();
 app.UseAuthManagementEndpoints();
 app.UseEmailWhitelistEndpoints();
 app.MapHub<StoryHub>("/storyhub/{storyid}");
+app.MapHub<UserHub>("/userhub");
 
 app.Run();

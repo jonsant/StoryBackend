@@ -13,6 +13,7 @@ namespace StoryBackend.Services
             serviceCollection.AddTransient<ILobbyMessageService, LobbyMessageService>();
             serviceCollection.AddTransient<IAuthManagementService, AuthManagementService>();
             serviceCollection.AddTransient<IEmailWhitelistService, EmailWhitelistService>();
+            serviceCollection.AddTransient<ICommonService, CommonService>();
 
             return serviceCollection;
         }

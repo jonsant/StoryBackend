@@ -1,16 +1,21 @@
 ﻿using Mapster;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using StoryBackend.Abstract;
 using StoryBackend.Database;
 using StoryBackend.Models;
 using StoryBackend.Models.DTOs;
+using StoryBackend.SignalR;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace StoryBackend.Services;
 
-public class InviteeService(StoryDbContext storyDbContext, IParticipantService participantService,
-    IAuthManagementService authManagementService) : IInviteeService
+public class InviteeService(StoryDbContext storyDbContext,
+    IParticipantService participantService,
+    IAuthManagementService authManagementService,
+    ICommonService commonService,
+    IHubContext<UserHub> userHubContext) : IInviteeService
 {
     public async Task<GetInviteeDto> CreateInvitee(CreateInviteeDto createInviteeDto, ClaimsPrincipal user)
     {

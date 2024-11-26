@@ -13,6 +13,7 @@
         //public List<LobbyMessage>? LobbyMessages { get; set; } = Enumerable.Empty<LobbyMessage>().ToList();
         //public List<StoryEntry>? StoryEntries { get; set;} = Enumerable.Empty<StoryEntry>().ToList();
         public int? CurrentPlayerInOrder { get; set; }
+        public Guid? CurrentPlayerId {  get; set; }
         public string? FinalStory { get; set; }
 
         public static Story Instance(string storyName, Guid creatorUserId, string status)
