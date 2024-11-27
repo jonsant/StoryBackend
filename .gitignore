@@ -398,3 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 /StoryBackend/Database/StoryDb.Sqlite
 /StoryBackend/Database/IdStoryDb.sqlite
+/StoryBackend/Database/StoryDb.Sqlite-wal
+/StoryBackend/Database/StoryDb.Sqlite-shm
