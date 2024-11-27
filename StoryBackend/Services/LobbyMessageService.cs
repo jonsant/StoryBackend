@@ -84,16 +84,4 @@ public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementS
         }
         return lobbyMessageDtos;
     }
-
-    private async Task<IEnumerable<string>> GetUsernamesList(IEnumerable<Guid> userIds)
-    {
-        List<string> usernames = new List<string>();
-        foreach (Guid id in userIds)
-        {
-            User? user = await storyDbContext.Users.FirstOrDefaultAsync(u => u.UserId.Equals(id));
-            if (user is null) continue;
-            usernames.Add(user.Username);
-        }
-        return usernames;
-    }
 }

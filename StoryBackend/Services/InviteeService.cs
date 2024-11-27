@@ -15,6 +15,7 @@ public class InviteeService(StoryDbContext storyDbContext,
     IParticipantService participantService,
     IAuthManagementService authManagementService,
     ICommonService commonService,
+    IHubContext<StoryHub> storyHubContext,
     IHubContext<UserHub> userHubContext) : IInviteeService
 {
     public async Task<GetInviteeDto> CreateInvitee(CreateInviteeDto createInviteeDto, ClaimsPrincipal user)
@@ -44,7 +45,9 @@ public class InviteeService(StoryDbContext storyDbContext,
 
         if (createdParticipant is not null)
         {
+            string? invitedUsername = await commonService.GetUsernameById(invite.UserId);
             await DeleteInvite(invite.InviteeId);
+            await storyHubContext.Clients.Group(createdParticipant.StoryId.ToString()).SendAsync("InviteAccepted", invitedUsername ?? "A user");
         }
 
         return createdParticipant;
@@ -83,17 +86,5 @@ public class InviteeService(StoryDbContext storyDbContext,
         await storyDbContext.SaveChangesAsync();
 
         return inviteeId;
-    }
-
-    private async Task<IEnumerable<string>> GetUsernamesList(IEnumerable<Guid> userIds)
-    {
-        List<string> usernames = new List<string>();
-        foreach (Guid id in userIds)
-        {
-            User? user = await storyDbContext.Users.FirstOrDefaultAsync(u => u.UserId.Equals(id));
-            if (user is null) continue;
-            usernames.Add(user.Username);
-        }
-        return usernames;
     }
 }

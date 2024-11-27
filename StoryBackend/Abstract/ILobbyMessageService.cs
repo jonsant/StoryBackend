@@ -7,7 +7,8 @@ public interface ILobbyMessageService
 {
     public Task<GetLobbyMessageDto> CreateLobbyMessage(CreateLobbyMessageDto createLobbyMessageDto, ClaimsPrincipal user);
     public Task<IEnumerable<GetLobbyMessageDto>> GetLobbyMessagesByStoryId(string storyId, ClaimsPrincipal user);
-    //public Task<GetParticipantDto?> AcceptInvite(AcceptInviteDto acceptInviteDto, ClaimsPrincipal user);
+
+    //public Task<GetLobbyMessageDto> CreateInfoLobbyMessage(CreateLobbyMessageDto infoLobbyMessageDto);
 
 
 }
