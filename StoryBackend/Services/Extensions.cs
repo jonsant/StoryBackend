@@ -14,6 +14,7 @@ namespace StoryBackend.Services
             serviceCollection.AddTransient<IAuthManagementService, AuthManagementService>();
             serviceCollection.AddTransient<IEmailWhitelistService, EmailWhitelistService>();
             serviceCollection.AddTransient<ICommonService, CommonService>();
+            serviceCollection.AddTransient<IEmailSend, EmailSend>();
 
             return serviceCollection;
         }

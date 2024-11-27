@@ -17,19 +17,26 @@ public class AuthManagementService: IAuthManagementService
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly JwtConfig _jwtConfig;
     private readonly AutoAdmins _autoAdmins;
+    private readonly CommonConfig _commonConfig;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IEmailSend _emailSend;
     public AuthManagementService(
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IOptionsMonitor<JwtConfig> optionsMonitor,
         IOptionsMonitor<AutoAdmins> autoAdminsMonitor,
-        IServiceProvider serviceProvider)
+        IOptionsMonitor<CommonConfig> commonConfigMonitor,
+        IServiceProvider serviceProvider,
+        IEmailSend emailSend
+        )
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _jwtConfig = optionsMonitor.CurrentValue;
         _autoAdmins = autoAdminsMonitor.CurrentValue;
+        _commonConfig = commonConfigMonitor.CurrentValue;
         _serviceProvider = serviceProvider;
+        _emailSend = emailSend;
     }
 
     public async Task<UserRegistrationResponseDto> Register(UserRegistrationRequestDto request)
@@ -217,6 +224,32 @@ public class AuthManagementService: IAuthManagementService
         List<string> roles = Enumerable.Empty<string>().ToList();
         roles = await _roleManager.Roles.Select(r => r.Name ?? "RoleWithoutName").ToListAsync();
         return roles;
+    }
+
+    public async Task<ResetPasswordEmailDto?> ResetPasswordEmail(ResetPasswordEmailDto resetPasswordEmailDto)
+    {
+        IdentityUser? user = await _userManager.FindByEmailAsync(resetPasswordEmailDto.Email);
+        if (user is null) return null;
+
+        string resetPasswordToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        byte[] tokenBytes = Encoding.UTF8.GetBytes(resetPasswordToken);
+        string tokenEncoded = Convert.ToBase64String(tokenBytes);
+        string url = $"{_commonConfig.FrontendUrl}#/resetpassword/{tokenEncoded}";
+        await _emailSend.SendEmailAsync(resetPasswordEmailDto.Email.ToLower(), "Reset Password", $"<html><a href=\"{url}\"><strong>Reset Password here</strong></a></html>");
+
+        return resetPasswordEmailDto;
+    }
+
+    public async Task<ResetPasswordRequestDto?> ResetPassword(ResetPasswordRequestDto resetPasswordRequestDto)
+    {
+        IdentityUser? user = await _userManager.FindByEmailAsync(resetPasswordRequestDto.Email);
+        if (user is null) return null;
+
+        IdentityResult resetSucceeded = await _userManager.ResetPasswordAsync(user, resetPasswordRequestDto.Token, resetPasswordRequestDto.NewPassword);
+        if (!resetSucceeded.Succeeded) return null;
+
+        resetPasswordRequestDto.Token = "";
+        return resetPasswordRequestDto;
     }
 
     /// <summary>
