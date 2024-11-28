@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200", "https://jonsant.github.io", "https://localhost:4200");
+            policy.WithOrigins("http://localhost:4200", "https://jonsant.github.io", "https://localhost:4200", "https://groupwriter.app", "http://groupwriter.app");
             policy.WithHeaders("*");
             policy.WithMethods("*");
             policy.AllowCredentials();
