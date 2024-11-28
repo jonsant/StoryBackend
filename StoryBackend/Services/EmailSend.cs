@@ -19,7 +19,7 @@ public class EmailSend : IEmailSend
         SendGridClient client = new SendGridClient(apiKey);
         SendGridMessage msg = new SendGridMessage()
         {
-            From = new EmailAddress(_sendingEmail.FromAddress, "StoryFrontend: Reset Password"),
+            From = new EmailAddress(_sendingEmail.FromAddress, "GroupWriter: Reset Password"),
             Subject = subject,
             PlainTextContent = message,
             HtmlContent = message
