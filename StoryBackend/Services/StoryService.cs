@@ -88,6 +88,15 @@ public class StoryService(StoryDbContext storyDbContext,
         List<Guid> participantEntries = await storyDbContext.Participants.Where(p => p.UserId.Equals(userId)).Select(pa => pa.StoryId).ToListAsync();
 
         List<GetStoryDto> stories = await storyDbContext.Stories.Where(s => !s.CreatorUserId.Equals(userId) && participantEntries.Contains(s.StoryId)).Select(s => s.Adapt<GetStoryDto>()).ToListAsync();
+
+        List<Guid> creatorUserIds = stories.Select(s => s.CreatorUserId).ToList();
+        Dictionary<Guid, string> creatorIdNameDict = (await commonService.GetUserIdUsernameDict(creatorUserIds)).ToDictionary();
+        
+        foreach (GetStoryDto story in stories)
+        {
+            story.CreatorUsername = creatorIdNameDict.First(c => c.Key.Equals(story.CreatorUserId)).Value;
+        }
+
         stories = stories.OrderByDescending(s => s.Created).ToList();
         return stories;
     }
