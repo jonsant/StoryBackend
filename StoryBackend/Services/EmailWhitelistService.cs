@@ -17,6 +17,13 @@ public class EmailWhitelistService(StoryDbContext storyDbContext, IAuthManagemen
 
     public async Task<AddEmailDto> AddEmail(AddEmailDto emailDto)
     {
+        EmailWhitelist? existingEmail = await storyDbContext.EmailWhitelist.FirstOrDefaultAsync(e => e.Email.ToLower().Equals(emailDto.Email.ToLower()));
+        if (existingEmail is not null)
+        {
+            emailDto.Email = "exists";
+            return emailDto;
+        }
+
         EmailWhitelist emailToAdd = EmailWhitelist.Instance(emailDto.Email);
         await storyDbContext.EmailWhitelist.AddAsync(emailToAdd);
         string res = "";
