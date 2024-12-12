@@ -46,14 +46,23 @@ public class StoryService(StoryDbContext storyDbContext,
         if (story is null) return null;
 
         IEnumerable<Guid> inviteeUserIds = await storyDbContext.Invitees.Where(i => i.StoryId.Equals(story.StoryId)).Select(i => i.UserId).ToListAsync();
-        IEnumerable<Guid> participantUserIds = await storyDbContext.Participants.Where(p => !p.UserId.Equals(story.CreatorUserId) && p.StoryId.Equals(story.StoryId)).Select(p => p.UserId).ToListAsync();
-        
+        //IEnumerable<Guid> participantUserIds = await storyDbContext.Participants.Where(p => !p.UserId.Equals(story.CreatorUserId) && p.StoryId.Equals(story.StoryId)).Select(p => p.UserId).ToListAsync();
+        List<Guid> allParticipantUserIds = (await participantService.GetStoryParticipantIds(story.StoryId)).ToList();
+
         GetStoryDto storyDto = story.Adapt<GetStoryDto>();
         storyDto.Invitees = await commonService.GetUsernamesList(inviteeUserIds);
-        storyDto.Participants = await commonService.GetUsernamesList(participantUserIds);
+        //storyDto.Participants = await commonService.GetUsernamesList(participantUserIds);
+        storyDto.Participants = await commonService.GetUsernamesList(allParticipantUserIds);
         storyDto.CreatorUsername = await commonService.GetUsernameById(story.CreatorUserId) ?? "";
         storyDto.NumberOfEntries = await storyDbContext.StoryEntries.CountAsync(s => s.StoryId.Equals(story.StoryId));
 
+        // If story is active, include username of current player
+        if (story.Status == "Active" && story.CurrentPlayerId is not null)
+        {
+            storyDto.CurrentPlayerUsername = await commonService.GetUsernameById(story.CurrentPlayerId.Value);
+        }
+
+        // If requesting user is current player in game, include the sentence to finish in the response
         if (story.CurrentPlayerId is not null && story.CurrentPlayerId.Equals(userId))
         {
             List<StoryEntry> allEntries = await storyDbContext.StoryEntries.

@@ -16,6 +16,7 @@ public record GetStoryDto()
     public string? Status { get; set; } // Created, Active, Finished
     public int? CurrentPlayerInOrder { get; set; }
     public Guid? CurrentPlayerId { get; set; }
+    public string? CurrentPlayerUsername { get; set; }
     public string? FinalStory { get; set; }
     public IEnumerable<string>? Invitees { get; set; } = Enumerable.Empty<string>();
     public IEnumerable<string>? Participants { get; set; } = Enumerable.Empty<string>();
