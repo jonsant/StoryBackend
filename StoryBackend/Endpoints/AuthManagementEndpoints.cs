@@ -13,7 +13,6 @@ public static class AuthManagementEndpoints
         app.MapPost("/CreateRole", AuthManagementCommandsAndQueries.HandleCreateRole).WithName("CreateRole").WithOpenApi().RequireAuthorization("AdminsOnly");
         app.MapGet("/GetRoles", AuthManagementCommandsAndQueries.HandleGetRoles).WithName("GetRoles").WithOpenApi().RequireAuthorization("AdminsOnly");
         app.MapGet("/GetCurrentUser", AuthManagementCommandsAndQueries.HandleGetCurrentUser).WithName("GetCurrentUser").WithOpenApi().RequireAuthorization();
-
         return app;
     }
 }

@@ -28,7 +28,7 @@ public class LobbyMessageService(StoryDbContext storyDbContext, IAuthManagementS
         if (participant is null) return null;
 
         LobbyMessage lobbyMessage = createLobbyMessageDto.Adapt<LobbyMessage>();
-        lobbyMessage.Created = DateTimeOffset.Now;
+        lobbyMessage.Created = DateTimeOffset.UtcNow;
         lobbyMessage.UserId = id.Value;
         await storyDbContext.LobbyMessages.AddAsync(lobbyMessage);
         await storyDbContext.SaveChangesAsync();

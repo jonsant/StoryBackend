@@ -15,6 +15,7 @@ namespace StoryBackend.Services
             serviceCollection.AddTransient<IEmailWhitelistService, EmailWhitelistService>();
             serviceCollection.AddTransient<ICommonService, CommonService>();
             serviceCollection.AddTransient<IEmailSend, EmailSend>();
+            serviceCollection.AddSingleton<IPushNotificationService, PushNotificationService>();
 
             return serviceCollection;
         }

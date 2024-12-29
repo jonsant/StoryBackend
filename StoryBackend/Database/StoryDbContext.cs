@@ -13,6 +13,7 @@ namespace StoryBackend.Database
         public DbSet<Participant> Participants { get; set; }
         public DbSet<StoryEntry> StoryEntries { get; set; }
         public DbSet<EmailWhitelist> EmailWhitelist { get; set; }
+        public DbSet<UserPushNotificationToken> UserPushNotificationTokens { get; set; }
 
         public StoryDbContext(DbContextOptions<StoryDbContext> dbContextOptions) : base(dbContextOptions) {}
     }

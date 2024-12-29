@@ -15,7 +15,7 @@
             {
                 UserId = userId,
                 StoryId = storyId,
-                Created = DateTimeOffset.Now
+                Created = DateTimeOffset.UtcNow
             };
         }
 

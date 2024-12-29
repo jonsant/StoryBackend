@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using StoryBackend.Abstract;
 using StoryBackend.Database;
 using StoryBackend.Models;
@@ -19,7 +20,8 @@ public class StoryService(StoryDbContext storyDbContext,
     //UserManager<IdentityUser> userManager,
     ICommonService commonService,
     IHubContext<StoryHub> storyHubContext,
-    IHubContext<UserHub> userHubContext
+    IHubContext<UserHub> userHubContext,
+    IPushNotificationService pushNotificationService
     ) : IStoryService
 {
     public async Task<GetWeatherForecastDto> CreateForecastTest(CreateWeatherForecast createWeatherForecastDto)
@@ -122,7 +124,7 @@ public class StoryService(StoryDbContext storyDbContext,
         await storyDbContext.Stories.AddAsync(newStory);
         await storyDbContext.SaveChangesAsync();
 
-        CreateParticipantDto? createParticipant = CreateParticipantDto.Instance(newStory.StoryId, id.Value, DateTimeOffset.Now);
+        CreateParticipantDto? createParticipant = CreateParticipantDto.Instance(newStory.StoryId, id.Value, DateTimeOffset.UtcNow);
         GetParticipantDto? createdParticipant = await participantService.CreateParticipant(createParticipant);
 
         foreach (string invitee in createStoryDto.Invitees)
@@ -135,6 +137,7 @@ public class StoryService(StoryDbContext storyDbContext,
             await storyDbContext.SaveChangesAsync();
             GetInviteeDto dto = GetInviteeDto.Instance(newInvitee.InviteeId, newStory.StoryName, newStory.StoryId, username, newInvitee.Created);
             await userHubContext.Clients.User(userToInvite.UserId.ToString()).SendAsync("NewInvite", dto);
+            await pushNotificationService.SendNotification(PushNotification.Instance("New invite!", $"{username} invited you to join {newStory.StoryName}.", userToInvite.UserId));
 
         }
         GetStoryDto getStoryDto = newStory.Adapt<GetStoryDto>();
@@ -182,6 +185,7 @@ public class StoryService(StoryDbContext storyDbContext,
         {
             //GetStoryDto? getStoryDto = await GetStoryById(story.StoryId.ToString(), claimsPrincipal);
             await storyHubContext.Clients.Group(story.StoryId.ToString()).SendAsync("NewEntry", story.CurrentPlayerId);
+            await pushNotificationService.SendNotification(PushNotification.Instance("Your turn!", $"It's your turn on {story.StoryName}", story.CurrentPlayerId.Value));
         }
         return createEntryDto;
     }
@@ -207,6 +211,7 @@ public class StoryService(StoryDbContext storyDbContext,
         {
             GetStoryDto? getStoryDto = await GetStoryById(story.StoryId.ToString(), claimsPrincipal);
             await storyHubContext.Clients.Group(story.StoryId.ToString()).SendAsync("StoryChanged", getStoryDto);
+            await PushNotifyAllStoryParticipants(story.StoryId, $"Story finished", $"{story.StoryName} is finished!", story.CreatorUserId);
         }
         return createEntryDto;
     }
@@ -234,5 +239,15 @@ public class StoryService(StoryDbContext storyDbContext,
             finalStoryEntries.Add(FinalStoryEntryDto.Instance(username, text));
         }
         return finalStoryEntries;
+    }
+
+    private async Task PushNotifyAllStoryParticipants(Guid storyId, string title, string message, Guid? excludedUserId = null)
+    {
+        IEnumerable<Guid> participantIds = await participantService.GetStoryParticipantIds(storyId);
+
+        await Parallel.ForEachAsync(participantIds, async (participantId, c) => {
+            if (excludedUserId is not null && participantId.Equals(excludedUserId)) return;
+            await pushNotificationService.SendNotification(PushNotification.Instance(title, message, participantId));
+        });
     }
 }

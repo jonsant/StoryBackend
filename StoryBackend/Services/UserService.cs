@@ -25,7 +25,7 @@ public class UserService(StoryDbContext storyDbContext, IAuthManagementService a
             user.Username = "user-" + Guid.NewGuid().ToString().Split('-')[0];
             unique = allUsers.FirstOrDefault(u => u.Username.Equals(user.Username)) is null;
         }
-        user.Created = DateTimeOffset.Now;
+        user.Created = DateTimeOffset.UtcNow;
         storyDbContext.Users.Add(user);
         await storyDbContext.SaveChangesAsync();
         return user.Adapt<GetUserDto>();

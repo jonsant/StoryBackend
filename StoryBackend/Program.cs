@@ -1,3 +1,4 @@
+using FirebaseAdmin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
@@ -18,6 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
 builder.Services.Configure<AutoAdmins>(builder.Configuration.GetSection("AutoAdmins"));
 builder.Services.Configure<SendingEmail>(builder.Configuration.GetSection("SendingEmail"));
+builder.Services.Configure<FirebaseConfig>(builder.Configuration.GetSection("FirebaseConfig"));
 builder.Services.Configure<CommonConfig>(builder.Configuration.GetSection("CommonConfig"));
 
 //builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
@@ -32,7 +34,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200", "https://jonsant.github.io", "https://localhost:4200", "https://groupwriter.app");
+            policy.WithOrigins("http://localhost:4200", "https://jonsant.github.io", "https://localhost:4200", "https://groupwriter.app", "http://127.0.0.1:8080");
             policy.WithHeaders("*");
             policy.WithMethods("*");
             policy.AllowCredentials();
@@ -134,6 +136,7 @@ app.UseInviteeEndpoints();
 app.UseLobbyMessageEndpoints();
 app.UseAuthManagementEndpoints();
 app.UseEmailWhitelistEndpoints();
+app.UsePushNotificationEndpoints();
 app.MapHub<StoryHub>("/storyhub/{storyid}");
 app.MapHub<UserHub>("/userhub");
 

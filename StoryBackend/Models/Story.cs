@@ -22,7 +22,7 @@
             {
                 StoryName = storyName,
                 CreatorUserId = creatorUserId,
-                Created = DateTimeOffset.Now,
+                Created = DateTimeOffset.UtcNow,
                 Status = status
             };
         }

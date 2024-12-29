@@ -13,6 +13,7 @@ namespace StoryBackend.Services;
 
 public class InviteeService(StoryDbContext storyDbContext,
     IParticipantService participantService,
+    IPushNotificationService pushNotificationService,
     IAuthManagementService authManagementService,
     ICommonService commonService,
     IHubContext<StoryHub> storyHubContext,
@@ -40,7 +41,10 @@ public class InviteeService(StoryDbContext storyDbContext,
         if (invite is null) return null;
         if (!invite.UserId.Equals(id)) return null;
 
-        CreateParticipantDto? createParticipant = CreateParticipantDto.Instance(invite.StoryId, invite.UserId, DateTimeOffset.Now);
+        Story? story = await storyDbContext.Stories.FirstOrDefaultAsync(s => s.StoryId.Equals(invite.StoryId));
+        if (story is null) return null;
+
+        CreateParticipantDto? createParticipant = CreateParticipantDto.Instance(invite.StoryId, invite.UserId, DateTimeOffset.UtcNow);
         GetParticipantDto? createdParticipant = await participantService.CreateParticipant(createParticipant);
 
         if (createdParticipant is not null)
@@ -48,6 +52,7 @@ public class InviteeService(StoryDbContext storyDbContext,
             string? invitedUsername = await commonService.GetUsernameById(invite.UserId);
             await DeleteInvite(invite.InviteeId);
             await storyHubContext.Clients.Group(createdParticipant.StoryId.ToString()).SendAsync("InviteAccepted", invitedUsername ?? "A user");
+            await pushNotificationService.SendNotification(PushNotification.Instance($"Invite accepted!", $"{invitedUsername} accepted your invite to {story.StoryName}!", story.CreatorUserId));
         }
 
         return createdParticipant;
