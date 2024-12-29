@@ -14,7 +14,20 @@ namespace StoryBackend.Database
             {
                 options.UseSqlite(builder.Configuration.GetConnectionString("IdStoryDb"));
             }, ServiceLifetime.Transient);
+
             return serviceCollection;
+        }
+
+        public static WebApplication ApplyStoryMigrations(this WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+            var storyDbContext = scope.ServiceProvider.GetRequiredService<StoryDbContext>();
+            IEnumerable<string>? pending = storyDbContext.Database.GetPendingMigrations();
+            if (pending.Any())
+            {
+                storyDbContext.Database.Migrate();
+            }
+            return app;
         }
     }
 }

@@ -118,6 +118,8 @@ builder.Services.AddStoryServices();
 
 var app = builder.Build();
 
+app.ApplyStoryMigrations();
+
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
