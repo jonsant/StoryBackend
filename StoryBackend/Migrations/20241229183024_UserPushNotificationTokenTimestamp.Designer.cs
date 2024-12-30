@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StoryBackend.Database;
 
@@ -10,9 +11,11 @@ using StoryBackend.Database;
 namespace StoryBackend.Migrations
 {
     [DbContext(typeof(StoryDbContext))]
-    partial class StoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241229183024_UserPushNotificationTokenTimestamp")]
+    partial class UserPushNotificationTokenTimestamp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.7");

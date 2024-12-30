@@ -9,6 +9,9 @@ public static class PushNotificationEndpoints
     {
         app.MapPost("/AddUserPushNotificationToken", PushNotificationCommandsAndQueries.HandleAddUserPushNotificationToken)
             .WithName("AddUserPushNotificationToken").WithOpenApi().RequireAuthorization();
+        app.MapPut("/ToggleUserPushNotificationToken", PushNotificationCommandsAndQueries.HandleToggleUserPushNotificationToken)
+            .WithName("ToggleUserPushNotificationToken").WithOpenApi().RequireAuthorization();
+        app.MapGet("/GetUserPushNotificationToken/{token}", PushNotificationCommandsAndQueries.HandleGetUserPushNotificationToken).WithOpenApi().RequireAuthorization();
         app.MapDelete("/DeleteUserPushNotificationToken/{token}", PushNotificationCommandsAndQueries.HandleDeleteUserPushNotificationToken)
             .WithName("DeleteUserPushNotificationToken").WithOpenApi().RequireAuthorization();
         return app;

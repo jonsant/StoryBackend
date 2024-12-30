@@ -49,7 +49,7 @@ public class PushNotificationService : IPushNotificationService
 
             if (existingToken is not null)
             {
-                existingToken.Created = DateTimeOffset.UtcNow;
+                existingToken.Timestamp = DateTimeOffset.UtcNow;
                 await storyDbContext.SaveChangesAsync();
                 return existingToken.Adapt<AddUserPushNotificationTokenDto>();
             }
@@ -62,6 +62,55 @@ public class PushNotificationService : IPushNotificationService
         }
     }
 
+    public async Task<ToggleUserPushNotificationTokenDto?> ToggleUserPushNotificationToken(ToggleUserPushNotificationTokenDto toggleUserPushNotificationTokenDto, ClaimsPrincipal claimsPrincipal)
+    {
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            StoryDbContext storyDbContext = scope.ServiceProvider.GetRequiredService<StoryDbContext>();
+            IAuthManagementService authManagementService = scope.ServiceProvider.GetRequiredService<IAuthManagementService>();
+
+            Guid? id = await authManagementService.GetUserId(claimsPrincipal);
+            if (id is null) return null;
+
+            UserPushNotificationToken? existingToken = await storyDbContext.UserPushNotificationTokens.
+                FirstOrDefaultAsync(pu =>
+                pu.Token.Equals(toggleUserPushNotificationTokenDto.Token) &&
+                pu.UserId.Equals(id.Value));
+
+            if (existingToken is null) return null;
+
+            existingToken.Enabled = toggleUserPushNotificationTokenDto.Enabled;
+            existingToken.Timestamp = DateTimeOffset.UtcNow;
+            int changes = await storyDbContext.SaveChangesAsync();
+
+            return changes > 0 ? existingToken.Adapt<ToggleUserPushNotificationTokenDto>() : toggleUserPushNotificationTokenDto;
+        }
+    }
+
+    public async Task<GetUserPushNotificationTokenDto?> GetUserPushNotificationToken(string token, ClaimsPrincipal claimsPrincipal)
+    {
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            StoryDbContext storyDbContext = scope.ServiceProvider.GetRequiredService<StoryDbContext>();
+            IAuthManagementService authManagementService = scope.ServiceProvider.GetRequiredService<IAuthManagementService>();
+
+            Guid? id = await authManagementService.GetUserId(claimsPrincipal);
+            if (id is null) return null;
+
+            UserPushNotificationToken? existingToken = await storyDbContext.UserPushNotificationTokens.
+                FirstOrDefaultAsync(pu =>
+                pu.Token.Equals(token) &&
+                pu.UserId.Equals(id.Value));
+
+            if (existingToken is null) return null;
+
+            existingToken.Timestamp = DateTimeOffset.UtcNow;
+            await storyDbContext.SaveChangesAsync();
+
+            return existingToken.Adapt<GetUserPushNotificationTokenDto>();
+        }
+    }
+
     public async Task<bool> SendNotification(PushNotification pushNotification)
     {
         using (var scope = _serviceProvider.CreateScope())
@@ -70,7 +119,7 @@ public class PushNotificationService : IPushNotificationService
 
             FirebaseMessaging messaging = FirebaseMessaging.GetMessaging(_firebaseApp);
 
-            IEnumerable<string> tokens = await GetPushTokensByUserId(pushNotification.UserId, storyDbContext);
+            IEnumerable<UserPushNotificationToken> tokens = await GetPushTokensByUserId(pushNotification.UserId, storyDbContext);
 
             await Parallel.ForEachAsync(tokens, async (token, c) => {
                 await Send(pushNotification, token, messaging, storyDbContext);
@@ -103,13 +152,14 @@ public class PushNotificationService : IPushNotificationService
         }
     }
 
-    private async Task<IEnumerable<string>> GetPushTokensByUserId(Guid userId, StoryDbContext storyDbContext)
+    private async Task<IEnumerable<UserPushNotificationToken>> GetPushTokensByUserId(Guid userId, StoryDbContext storyDbContext)
     {
-        return await storyDbContext.UserPushNotificationTokens.Where(up => up.UserId.Equals(userId)).Select(up => up.Token).ToListAsync();
+        return await storyDbContext.UserPushNotificationTokens.Where(up => up.UserId.Equals(userId)).ToListAsync();
     }
 
-    private async Task<bool> Send(PushNotification pushNotification, string token, FirebaseMessaging messaging, StoryDbContext storyDbContext)
+    private async Task<bool> Send(PushNotification pushNotification, UserPushNotificationToken token, FirebaseMessaging messaging, StoryDbContext storyDbContext)
     {
+        if (token.Enabled is false) return false;
         var msg = new Message()
         {
             Notification = new Notification()
@@ -117,7 +167,7 @@ public class PushNotificationService : IPushNotificationService
                 Title = pushNotification.Title,
                 Body = pushNotification.Message
             },
-            Token = token
+            Token = token.Token
         };
         string? response = null;
         try
@@ -127,7 +177,7 @@ public class PushNotificationService : IPushNotificationService
         {
             if (ex.ErrorCode == ErrorCode.NotFound)
             {
-                await DeleteToken(token, storyDbContext);
+                await DeleteToken(token.Token, storyDbContext);
             }
         }
         return response is not null;
