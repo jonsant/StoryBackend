@@ -20,13 +20,13 @@ namespace StoryBackend.Database
 
         public static WebApplication ApplyStoryMigrations(this WebApplication app)
         {
-            //using var scope = app.Services.CreateScope();
-            //var storyDbContext = scope.ServiceProvider.GetRequiredService<StoryDbContext>();
-            //IEnumerable<string>? pending = storyDbContext.Database.GetPendingMigrations();
-            //if (pending.Any())
-            //{
-            //    storyDbContext.Database.Migrate();
-            //}
+            using var scope = app.Services.CreateScope();
+            var storyDbContext = scope.ServiceProvider.GetRequiredService<StoryDbContext>();
+            IEnumerable<string>? pending = storyDbContext.Database.GetPendingMigrations();
+            if (pending.Any())
+            {
+                storyDbContext.Database.Migrate();
+            }
             return app;
         }
     }

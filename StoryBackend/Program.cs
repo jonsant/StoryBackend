@@ -19,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
 builder.Services.Configure<AutoAdmins>(builder.Configuration.GetSection("AutoAdmins"));
 builder.Services.Configure<SendingEmail>(builder.Configuration.GetSection("SendingEmail"));
-//builder.Services.Configure<FirebaseConfig>(builder.Configuration.GetSection("FirebaseConfig"));
+builder.Services.Configure<FirebaseConfig>(builder.Configuration.GetSection("FirebaseConfig"));
 builder.Services.Configure<CommonConfig>(builder.Configuration.GetSection("CommonConfig"));
 
 //builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
