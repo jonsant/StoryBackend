@@ -23,9 +23,11 @@ public class PushNotificationService : IPushNotificationService
     {
         _serviceProvider = serviceProvider;
         _firebaseConfig = firebaseOptionsMonitor.CurrentValue;
+        byte[] binaryData = Convert.FromBase64String(_firebaseConfig.SA);
+        string decodedString = System.Text.Encoding.UTF8.GetString(binaryData);
         AppOptions options = new AppOptions()
         {
-            Credential = GoogleCredential.FromJson(_firebaseConfig.SA),
+            Credential = GoogleCredential.FromJson(decodedString),
             ProjectId = "storyfrontend-pwa"
         };
         _firebaseApp = FirebaseApp.Create(options);
