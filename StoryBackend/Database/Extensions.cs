@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StoryBackend.Models;
 
 namespace StoryBackend.Database
 {
@@ -26,6 +27,27 @@ namespace StoryBackend.Database
             if (pending.Any())
             {
                 storyDbContext.Database.Migrate();
+            }
+            string? autoAdmins = app.Configuration.GetValue<string?>("AutoAdmins:Emails");
+            if (autoAdmins is null) return app;
+            string firstAdmin = autoAdmins.Split(";")[0];
+            EmailWhitelist? adminWhitelisted = storyDbContext.EmailWhitelist.FirstOrDefault(w => w.Email.Equals(firstAdmin));
+            if (adminWhitelisted is null)
+            {
+                storyDbContext.EmailWhitelist.Add(EmailWhitelist.Instance(firstAdmin));
+                storyDbContext.SaveChanges();
+            }
+            return app;
+        }
+
+        public static WebApplication ApplyIdStoryMigrations(this WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+            var idStoryDbContext = scope.ServiceProvider.GetRequiredService<IdStoryDbContext>();
+            IEnumerable<string>? pending = idStoryDbContext.Database.GetPendingMigrations();
+            if (pending.Any())
+            {
+                idStoryDbContext.Database.Migrate();
             }
             return app;
         }

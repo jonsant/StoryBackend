@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace StoryBackend.Models;
+﻿namespace StoryBackend.Models;
 
 public class EmailWhitelist
 {
