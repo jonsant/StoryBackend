@@ -9,11 +9,11 @@ namespace StoryBackend.Database
         {
             serviceCollection.AddDbContext<StoryDbContext>(options =>
             {
-                options.UseSqlite(builder.Configuration.GetConnectionString("StoryDb"));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("StoryDb"));
             }, ServiceLifetime.Transient);
             serviceCollection.AddDbContext<IdStoryDbContext>(options =>
             {
-                options.UseSqlite(builder.Configuration.GetConnectionString("IdStoryDb"));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("IdStoryDb"));
             }, ServiceLifetime.Transient);
 
             return serviceCollection;
